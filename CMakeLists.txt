@@ -33,6 +33,8 @@ force_redefine_file_macro_for_sources(ultra)
 
 set(LIBS
         ultra
+        pthread
+        yaml-cpp
         )
 
 if(BUILD_TEST)

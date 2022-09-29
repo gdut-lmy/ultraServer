@@ -14,257 +14,320 @@
 #include <cstdarg>
 #include <list>
 #include <map>
+#include <yaml-cpp/yaml.h>
 #include "singleton.h"
 #include "mutex.h"
+/**
+ * @brief »ñÈ¡rootÈÕÖ¾Æ÷
+ */
+#define ULTRA_LOG_ROOT() ultra::LoggerMgr::GetInstance()->getRoot()
 
+/**
+ * @brief »ñÈ¡Ö¸¶¨Ãû³ÆµÄÈÕÖ¾Æ÷
+ */
+#define ULTRA_LOG_NAME(name) ultra::LoggerMgr::GetInstance()->getLogger(name)
+
+/**
+ * @brief Ê¹ÓÃÁ÷Ê½·½Ê½½«ÈÕÖ¾¼¶±ğlevelµÄÈÕÖ¾Ğ´Èëµ½logger
+ * @details ¹¹ÔìÒ»¸öLogEventWrap¶ÔÏó£¬°ü¹ü°üº¬ÈÕÖ¾Æ÷ºÍÈÕÖ¾ÊÂ¼ş£¬ÔÚ¶ÔÏóÎö¹¹Ê±µ÷ÓÃÈÕÖ¾Æ÷Ğ´ÈÕÖ¾ÊÂ¼ş
+ * @todo Ğ­³ÌidÎ´ÊµÏÖ£¬ÔİÊ±Ğ´0
+ */
+#define ULTRA_LOG_LEVEL(logger , level) \
+    if(level <= logger->getLevel()) \
+        ultra::LogEventWrap(logger, ultra::LogEvent::ptr(new ultra::LogEvent(logger->getName(), \
+            level, __FILE__, __LINE__, ultra::GetElapsedMS() - logger->getCreateTime(), \
+            ultra::GetThreadId(), ultra::GetFiberId(), time(0), ultra::GetThreadName()))).getLogEvent()->getSS()
+
+#define ULTRA_LOG_FATAL(logger) ULTRA_LOG_LEVEL(logger, ultra::LogLevel::FATAL)
+
+#define ULTRA_LOG_ALERT(logger) ULTRA_LOG_LEVEL(logger, ultra::LogLevel::ALERT)
+
+#define ULTRA_LOG_CRIT(logger) ULTRA_LOG_LEVEL(logger, ultra::LogLevel::CRIT)
+
+#define ULTRA_LOG_ERROR(logger) ULTRA_LOG_LEVEL(logger, ultra::LogLevel::ERROR)
+
+#define ULTRA_LOG_WARN(logger) ULTRA_LOG_LEVEL(logger, ultra::LogLevel::WARN)
+
+#define ULTRA_LOG_NOTICE(logger) ULTRA_LOG_LEVEL(logger, ultra::LogLevel::NOTICE)
+
+#define ULTRA_LOG_INFO(logger) ULTRA_LOG_LEVEL(logger, ultra::LogLevel::INFO)
+
+#define ULTRA_LOG_DEBUG(logger) ULTRA_LOG_LEVEL(logger, ultra::LogLevel::DEBUG)
+
+/**
+ * @brief Ê¹ÓÃC printf·½Ê½½«ÈÕÖ¾¼¶±ğlevelµÄÈÕÖ¾Ğ´Èëµ½logger
+ * @details ¹¹ÔìÒ»¸öLogEventWrap¶ÔÏó£¬°ü¹ü°üº¬ÈÕÖ¾Æ÷ºÍÈÕÖ¾ÊÂ¼ş£¬ÔÚ¶ÔÏóÎö¹¹Ê±µ÷ÓÃÈÕÖ¾Æ÷Ğ´ÈÕÖ¾ÊÂ¼ş
+ * @todo Ğ­³ÌidÎ´ÊµÏÖ£¬ÔİÊ±Ğ´0
+ */
+#define ULTRA_LOG_FMT_LEVEL(logger, level, fmt, ...) \
+    if(level <= logger->getLevel()) \
+        ultra::LogEventWrap(logger, ultra::LogEvent::ptr(new ultra::LogEvent(logger->getName(), \
+            level, __FILE__, __LINE__, ultra::GetElapsedMS() - logger->getCreateTime(), \
+            ultra::GetThreadId(), ultra::GetFiberId(), time(0), ultra::GetThreadName()))).getLogEvent()->printf(fmt, __VA_ARGS__)
+
+#define ULTRA_LOG_FMT_FATAL(logger, fmt, ...) ULTRA_LOG_FMT_LEVEL(logger, ultra::LogLevel::FATAL, fmt, __VA_ARGS__)
+
+#define ULTRA_LOG_FMT_ALERT(logger, fmt, ...) ULTRA_LOG_FMT_LEVEL(logger, ultra::LogLevel::ALERT, fmt, __VA_ARGS__)
+
+#define ULTRA_LOG_FMT_CRIT(logger, fmt, ...) ULTRA_LOG_FMT_LEVEL(logger, ultra::LogLevel::CRIT, fmt, __VA_ARGS__)
+
+#define ULTRA_LOG_FMT_ERROR(logger, fmt, ...) ULTRA_LOG_FMT_LEVEL(logger, ultra::LogLevel::ERROR, fmt, __VA_ARGS__)
+
+#define ULTRA_LOG_FMT_WARN(logger, fmt, ...) ULTRA_LOG_FMT_LEVEL(logger, ultra::LogLevel::WARN, fmt, __VA_ARGS__)
+
+#define ULTRA_LOG_FMT_NOTICE(logger, fmt, ...) ULTRA_LOG_FMT_LEVEL(logger, ultra::LogLevel::NOTICE, fmt, __VA_ARGS__)
+
+#define ULTRA_LOG_FMT_INFO(logger, fmt, ...) ULTRA_LOG_FMT_LEVEL(logger, ultra::LogLevel::INFO, fmt, __VA_ARGS__)
+
+#define ULTRA_LOG_FMT_DEBUG(logger, fmt, ...) ULTRA_LOG_FMT_LEVEL(logger, ultra::LogLevel::DEBUG, fmt, __VA_ARGS__)
 namespace ultra {
     /**
- * @brief æ—¥å¿—çº§åˆ«
+ * @brief ÈÕÖ¾¼¶±ğ
  */
     class LogLevel {
     public:
         /**
-         * @brief æ—¥å¿—çº§åˆ«æšä¸¾ï¼Œå‚è€ƒlog4cpp
+         * @brief ÈÕÖ¾¼¶±ğÃ¶¾Ù£¬²Î¿¼log4cpp
          */
         enum Level {
-            /// è‡´å‘½æƒ…å†µï¼Œç³»ç»Ÿä¸å¯ç”¨
+            /// ÖÂÃüÇé¿ö£¬ÏµÍ³²»¿ÉÓÃ
             FATAL = 0,
-            /// é«˜ä¼˜å…ˆçº§æƒ…å†µï¼Œä¾‹å¦‚æ•°æ®åº“ç³»ç»Ÿå´©æºƒ
+            /// ¸ßÓÅÏÈ¼¶Çé¿ö£¬ÀıÈçÊı¾İ¿âÏµÍ³±ÀÀ£
             ALERT = 100,
-            /// ä¸¥é‡é”™è¯¯ï¼Œä¾‹å¦‚ç¡¬ç›˜é”™è¯¯
+            /// ÑÏÖØ´íÎó£¬ÀıÈçÓ²ÅÌ´íÎó
             CRIT = 200,
-            /// é”™è¯¯
+            /// ´íÎó
             ERROR = 300,
-            /// è­¦å‘Š
+            /// ¾¯¸æ
             WARN = 400,
-            /// æ­£å¸¸ä½†å€¼å¾—æ³¨æ„
+            /// Õı³£µ«ÖµµÃ×¢Òâ
             NOTICE = 500,
-            /// ä¸€èˆ¬ä¿¡æ¯
+            /// Ò»°ãĞÅÏ¢
             INFO = 600,
-            /// è°ƒè¯•ä¿¡æ¯
+            /// µ÷ÊÔĞÅÏ¢
             DEBUG = 700,
-            /// æœªè®¾ç½®
+            /// Î´ÉèÖÃ
             NOTSET = 800,
         };
 
         /**
-         * @brief æ—¥å¿—çº§åˆ«è½¬å­—ç¬¦ä¸²
-         * @param[in] level æ—¥å¿—çº§åˆ«
-         * @return å­—ç¬¦ä¸²å½¢å¼çš„æ—¥å¿—çº§åˆ«
+         * @brief ÈÕÖ¾¼¶±ğ×ª×Ö·û´®
+         * @param[in] level ÈÕÖ¾¼¶±ğ
+         * @return ×Ö·û´®ĞÎÊ½µÄÈÕÖ¾¼¶±ğ
          */
         static const char *ToString(LogLevel::Level level);
 
         /**
-         * @brief å­—ç¬¦ä¸²è½¬æ—¥å¿—çº§åˆ«
-         * @param[in] str å­—ç¬¦ä¸²
-         * @return æ—¥å¿—çº§åˆ«
-         * @note ä¸åŒºåˆ†å¤§å°å†™
+         * @brief ×Ö·û´®×ªÈÕÖ¾¼¶±ğ
+         * @param[in] str ×Ö·û´®
+         * @return ÈÕÖ¾¼¶±ğ
+         * @note ²»Çø·Ö´óĞ¡Ğ´
          */
         static LogLevel::Level FromString(const std::string &str);
     };
 
 /**
- * @brief æ—¥å¿—äº‹ä»¶
+ * @brief ÈÕÖ¾ÊÂ¼ş
  */
     class LogEvent {
     public:
         typedef std::shared_ptr<LogEvent> ptr;
 
         /**
-         * @brief æ„é€ å‡½æ•°
-         * @param[in] logger_name æ—¥å¿—å™¨åç§°
-         * @param[in] level æ—¥å¿—çº§åˆ«
-         * @param[in] file æ–‡ä»¶å
-         * @param[in] line è¡Œå·
-         * @param[in] elapse ä»æ—¥å¿—å™¨åˆ›å»ºå¼€å§‹åˆ°å½“å‰çš„ç´¯è®¡è¿è¡Œæ¯«ç§’
-         * @param[in] thead_id çº¿ç¨‹id
-         * @param[in] fiber_id åç¨‹id
-         * @param[in] time UTCæ—¶é—´
-         * @param[in] thread_name çº¿ç¨‹åç§°
+         * @brief ¹¹Ôìº¯Êı
+         * @param[in] logger_name ÈÕÖ¾Æ÷Ãû³Æ
+         * @param[in] level ÈÕÖ¾¼¶±ğ
+         * @param[in] file ÎÄ¼şÃû
+         * @param[in] line ĞĞºÅ
+         * @param[in] elapse ´ÓÈÕÖ¾Æ÷´´½¨¿ªÊ¼µ½µ±Ç°µÄÀÛ¼ÆÔËĞĞºÁÃë
+         * @param[in] thead_id Ïß³Ìid
+         * @param[in] fiber_id Ğ­³Ìid
+         * @param[in] time UTCÊ±¼ä
+         * @param[in] thread_name Ïß³ÌÃû³Æ
          */
         LogEvent(const std::string &logger_name, LogLevel::Level level, const char *file, int32_t line, int64_t elapse,
                  uint32_t thread_id, uint64_t fiber_id, time_t time, const std::string &thread_name);
 
         /**
-         * @brief è·å–æ—¥å¿—çº§åˆ«
+         * @brief »ñÈ¡ÈÕÖ¾¼¶±ğ
          */
         LogLevel::Level getLevel() const { return m_level; }
 
         /**
-         * @brief è·å–æ—¥å¿—å†…å®¹
+         * @brief »ñÈ¡ÈÕÖ¾ÄÚÈİ
          */
         std::string getContent() const { return m_ss.str(); }
 
         /**
-         * @brief è·å–æ–‡ä»¶å
+         * @brief »ñÈ¡ÎÄ¼şÃû
          */
         std::string getFile() const { return m_file; }
 
         /**
-         * @brief è·å–è¡Œå·
+         * @brief »ñÈ¡ĞĞºÅ
          */
         int32_t getLine() const { return m_line; }
 
         /**
-         * @brief è·å–ç´¯è®¡è¿è¡Œæ¯«ç§’æ•°
+         * @brief »ñÈ¡ÀÛ¼ÆÔËĞĞºÁÃëÊı
          */
         int64_t getElapse() const { return m_elapse; }
 
         /**
-         * @brief è·å–çº¿ç¨‹id
+         * @brief »ñÈ¡Ïß³Ìid
          */
         uint32_t getThreadId() const { return m_threadId; }
 
         /**
-         * @brief è·å–åç¨‹id
+         * @brief »ñÈ¡Ğ­³Ìid
          */
         uint64_t getFiberId() const { return m_fiberId; }
 
         /**
-         * @brief è¿”å›æ—¶é—´æˆ³
+         * @brief ·µ»ØÊ±¼ä´Á
          */
         time_t getTime() const { return m_time; }
 
         /**
-         * @brief è·å–çº¿ç¨‹åç§°
+         * @brief »ñÈ¡Ïß³ÌÃû³Æ
          */
         const std::string &getThreadName() const { return m_threadName; }
 
         /**
-         * @brief è·å–å†…å®¹å­—èŠ‚æµï¼Œç”¨äºæµå¼å†™å…¥æ—¥å¿—
+         * @brief »ñÈ¡ÄÚÈİ×Ö½ÚÁ÷£¬ÓÃÓÚÁ÷Ê½Ğ´ÈëÈÕÖ¾
          */
         std::stringstream &getSS() { return m_ss; }
 
         /**
-         * @brief è·å–æ—¥å¿—å™¨åç§°
+         * @brief »ñÈ¡ÈÕÖ¾Æ÷Ãû³Æ
          */
         const std::string &getLoggerName() const { return m_loggerName; }
 
         /**
-         * @brief C prinfé£æ ¼å†™å…¥æ—¥å¿—
+         * @brief C printf·ç¸ñĞ´ÈëÈÕÖ¾
          */
         void printf(const char *fmt, ...);
 
         /**
-         * @brief C vprintfé£æ ¼å†™å…¥æ—¥å¿—
+         * @brief C vprintf·ç¸ñĞ´ÈëÈÕÖ¾
          */
         void vprintf(const char *fmt, va_list ap);
 
     private:
-        /// æ—¥å¿—çº§åˆ«
+        /// ÈÕÖ¾¼¶±ğ
         LogLevel::Level m_level;
-        /// æ—¥å¿—å†…å®¹ï¼Œä½¿ç”¨stringstreamå­˜å‚¨ï¼Œä¾¿äºæµå¼å†™å…¥æ—¥å¿—
+        /// ÈÕÖ¾ÄÚÈİ£¬Ê¹ÓÃstringstream´æ´¢£¬±ãÓÚÁ÷Ê½Ğ´ÈëÈÕÖ¾
         std::stringstream m_ss;
-        /// æ–‡ä»¶å
+        /// ÎÄ¼şÃû
         const char *m_file = nullptr;
-        /// è¡Œå·
+        /// ĞĞºÅ
         int32_t m_line = 0;
-        /// ä»æ—¥å¿—å™¨åˆ›å»ºå¼€å§‹åˆ°å½“å‰çš„è€—æ—¶
+        /// ´ÓÈÕÖ¾Æ÷´´½¨¿ªÊ¼µ½µ±Ç°µÄºÄÊ±
         int64_t m_elapse = 0;
-        /// çº¿ç¨‹id
+        /// Ïß³Ìid
         uint32_t m_threadId = 0;
-        /// åç¨‹id
+        /// Ğ­³Ìid
         uint64_t m_fiberId = 0;
-        /// UTCæ—¶é—´æˆ³
+        /// UTCÊ±¼ä´Á
         time_t m_time;
-        /// çº¿ç¨‹åç§°
+        /// Ïß³ÌÃû³Æ
         std::string m_threadName;
-        /// æ—¥å¿—å™¨åç§°
+        /// ÈÕÖ¾Æ÷Ãû³Æ
         std::string m_loggerName;
     };
 
 /**
- * @brief æ—¥å¿—æ ¼å¼åŒ–
+ * @brief ÈÕÖ¾¸ñÊ½»¯
  */
     class LogFormatter {
     public:
         typedef std::shared_ptr<LogFormatter> ptr;
 
         /**
-         * @brief æ„é€ å‡½æ•°
-         * @param[in] pattern æ ¼å¼æ¨¡æ¿ï¼Œå‚è€ƒsylarä¸log4cpp
-         * @details æ¨¡æ¿å‚æ•°è¯´æ˜ï¼š
-         * - %%m æ¶ˆæ¯
-         * - %%p æ—¥å¿—çº§åˆ«
-         * - %%c æ—¥å¿—å™¨åç§°
-         * - %%d æ—¥æœŸæ—¶é—´ï¼Œåé¢å¯è·Ÿä¸€å¯¹æ‹¬å·æŒ‡å®šæ—¶é—´æ ¼å¼ï¼Œæ¯”å¦‚%%d{%%Y-%%m-%%d %%H:%%M:%%S}ï¼Œè¿™é‡Œçš„æ ¼å¼å­—ç¬¦ä¸Cè¯­è¨€strftimeä¸€è‡´
-         * - %%r è¯¥æ—¥å¿—å™¨åˆ›å»ºåçš„ç´¯è®¡è¿è¡Œæ¯«ç§’æ•°
-         * - %%f æ–‡ä»¶å
-         * - %%l è¡Œå·
-         * - %%t çº¿ç¨‹id
-         * - %%F åç¨‹id
-         * - %%N çº¿ç¨‹åç§°
-         * - %%% ç™¾åˆ†å·
-         * - %%T åˆ¶è¡¨ç¬¦
-         * - %%n æ¢è¡Œ
+         * @brief ¹¹Ôìº¯Êı
+         * @param[in] pattern ¸ñÊ½Ä£°å£¬²Î¿¼sylarÓëlog4cpp
+         * @details Ä£°å²ÎÊıËµÃ÷£º
+         * - %%m ÏûÏ¢
+         * - %%p ÈÕÖ¾¼¶±ğ
+         * - %%c ÈÕÖ¾Æ÷Ãû³Æ
+         * - %%d ÈÕÆÚÊ±¼ä£¬ºóÃæ¿É¸úÒ»¶ÔÀ¨ºÅÖ¸¶¨Ê±¼ä¸ñÊ½£¬±ÈÈç%%d{%%Y-%%m-%%d %%H:%%M:%%S}£¬ÕâÀïµÄ¸ñÊ½×Ö·ûÓëCÓïÑÔstrftimeÒ»ÖÂ
+         * - %%r ¸ÃÈÕÖ¾Æ÷´´½¨ºóµÄÀÛ¼ÆÔËĞĞºÁÃëÊı
+         * - %%f ÎÄ¼şÃû
+         * - %%l ĞĞºÅ
+         * - %%t Ïß³Ìid
+         * - %%F Ğ­³Ìid
+         * - %%N Ïß³ÌÃû³Æ
+         * - %%% °Ù·ÖºÅ
+         * - %%T ÖÆ±í·û
+         * - %%n »»ĞĞ
          *
-         * é»˜è®¤æ ¼å¼ï¼š%%d{%%Y-%%m-%%d %%H:%%M:%%S}%%T%%t%%T%%N%%T%%F%%T[%%p]%%T[%%c]%%T%%f:%%l%%T%%m%%n
+         * Ä¬ÈÏ¸ñÊ½£º%%d{%%Y-%%m-%%d %%H:%%M:%%S}%%T%%t%%T%%N%%T%%F%%T[%%p]%%T[%%c]%%T%%f:%%l%%T%%m%%n
          *
-         * é»˜è®¤æ ¼å¼æè¿°ï¼šå¹´-æœˆ-æ—¥ æ—¶:åˆ†:ç§’ [ç´¯è®¡è¿è¡Œæ¯«ç§’æ•°] \\t çº¿ç¨‹id \\t çº¿ç¨‹åç§° \\t åç¨‹id \\t [æ—¥å¿—çº§åˆ«] \\t [æ—¥å¿—å™¨åç§°] \\t æ–‡ä»¶å:è¡Œå· \\t æ—¥å¿—æ¶ˆæ¯ æ¢è¡Œç¬¦
+         * Ä¬ÈÏ¸ñÊ½ÃèÊö£ºÄê-ÔÂ-ÈÕ Ê±:·Ö:Ãë [ÀÛ¼ÆÔËĞĞºÁÃëÊı] \\t Ïß³Ìid \\t Ïß³ÌÃû³Æ \\t Ğ­³Ìid \\t [ÈÕÖ¾¼¶±ğ] \\t [ÈÕÖ¾Æ÷Ãû³Æ] \\t ÎÄ¼şÃû:ĞĞºÅ \\t ÈÕÖ¾ÏûÏ¢ »»ĞĞ·û
          */
         LogFormatter(const std::string &pattern = "%d{%Y-%m-%d %H:%M:%S} [%rms]%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n");
 
         /**
-         * @brief åˆå§‹åŒ–ï¼Œè§£ææ ¼å¼æ¨¡æ¿ï¼Œæå–æ¨¡æ¿é¡¹
+         * @brief ³õÊ¼»¯£¬½âÎö¸ñÊ½Ä£°å£¬ÌáÈ¡Ä£°åÏî
          */
         void init();
 
         /**
-         * @brief æ¨¡æ¿è§£ææ˜¯å¦å‡ºé”™
+         * @brief Ä£°å½âÎöÊÇ·ñ³ö´í
          */
         bool isError() const { return m_error; }
 
         /**
-         * @brief å¯¹æ—¥å¿—äº‹ä»¶è¿›è¡Œæ ¼å¼åŒ–ï¼Œè¿”å›æ ¼å¼åŒ–æ—¥å¿—æ–‡æœ¬
-         * @param[in] event æ—¥å¿—äº‹ä»¶
-         * @return æ ¼å¼åŒ–æ—¥å¿—å­—ç¬¦ä¸²
+         * @brief ¶ÔÈÕÖ¾ÊÂ¼ş½øĞĞ¸ñÊ½»¯£¬·µ»Ø¸ñÊ½»¯ÈÕÖ¾ÎÄ±¾
+         * @param[in] event ÈÕÖ¾ÊÂ¼ş
+         * @return ¸ñÊ½»¯ÈÕÖ¾×Ö·û´®
          */
         std::string format(LogEvent::ptr event);
 
         /**
-         * @brief å¯¹æ—¥å¿—äº‹ä»¶è¿›è¡Œæ ¼å¼åŒ–ï¼Œè¿”å›æ ¼å¼åŒ–æ—¥å¿—æµ
-         * @param[in] event æ—¥å¿—äº‹ä»¶
-         * @param[in] os æ—¥å¿—è¾“å‡ºæµ
-         * @return æ ¼å¼åŒ–æ—¥å¿—æµ
+         * @brief ¶ÔÈÕÖ¾ÊÂ¼ş½øĞĞ¸ñÊ½»¯£¬·µ»Ø¸ñÊ½»¯ÈÕÖ¾Á÷
+         * @param[in] event ÈÕÖ¾ÊÂ¼ş
+         * @param[in] os ÈÕÖ¾Êä³öÁ÷
+         * @return ¸ñÊ½»¯ÈÕÖ¾Á÷
          */
         std::ostream &format(std::ostream &os, LogEvent::ptr event);
 
         /**
-         * @brief è·å–pattern
+         * @brief »ñÈ¡pattern
          */
         std::string getPattern() const { return m_pattern; }
 
     public:
         /**
-         * @brief æ—¥å¿—å†…å®¹æ ¼å¼åŒ–é¡¹ï¼Œè™šåŸºç±»ï¼Œç”¨äºæ´¾ç”Ÿå‡ºä¸åŒçš„æ ¼å¼åŒ–é¡¹
+         * @brief ÈÕÖ¾ÄÚÈİ¸ñÊ½»¯Ïî£¬Ğé»ùÀà£¬ÓÃÓÚÅÉÉú³ö²»Í¬µÄ¸ñÊ½»¯Ïî
          */
         class FormatItem {
         public:
             typedef std::shared_ptr<FormatItem> ptr;
 
             /**
-             * @brief ææ„å‡½æ•°
+             * @brief Îö¹¹º¯Êı
              */
             virtual ~FormatItem() {}
 
             /**
-             * @brief æ ¼å¼åŒ–æ—¥å¿—äº‹ä»¶
+             * @brief ¸ñÊ½»¯ÈÕÖ¾ÊÂ¼ş
              */
             virtual void format(std::ostream &os, LogEvent::ptr event) = 0;
         };
 
     private:
-        /// æ—¥å¿—æ ¼å¼æ¨¡æ¿
+        /// ÈÕÖ¾¸ñÊ½Ä£°å
         std::string m_pattern;
-        /// è§£æåçš„æ ¼å¼æ¨¡æ¿æ•°ç»„
+        /// ½âÎöºóµÄ¸ñÊ½Ä£°åÊı×é
         std::vector<FormatItem::ptr> m_items;
-        /// æ˜¯å¦å‡ºé”™
+        /// ÊÇ·ñ³ö´í
         bool m_error = false;
     };
 
 /**
- * @brief æ—¥å¿—è¾“å‡ºåœ°ï¼Œè™šåŸºç±»ï¼Œç”¨äºæ´¾ç”Ÿå‡ºä¸åŒçš„LogAppender
- * @details å‚è€ƒlog4cppï¼ŒAppenderè‡ªå¸¦ä¸€ä¸ªé»˜è®¤çš„LogFormatterï¼Œä»¥æ§ä»¶é»˜è®¤è¾“å‡ºæ ¼å¼
+ * @brief ÈÕÖ¾Êä³öµØ£¬Ğé»ùÀà£¬ÓÃÓÚÅÉÉú³ö²»Í¬µÄLogAppender
+ * @details ²Î¿¼log4cpp£¬Appender×Ô´øÒ»¸öÄ¬ÈÏµÄLogFormatter£¬ÒÔ¿Ø¼şÄ¬ÈÏÊä³ö¸ñÊ½
  */
     class LogAppender {
     public:
@@ -272,111 +335,111 @@ namespace ultra {
         typedef Spinlock MutexType;
 
         /**
-         * @brief æ„é€ å‡½æ•°
-         * @param[in] default_formatter é»˜è®¤æ—¥å¿—æ ¼å¼å™¨
+         * @brief ¹¹Ôìº¯Êı
+         * @param[in] default_formatter Ä¬ÈÏÈÕÖ¾¸ñÊ½Æ÷
          */
         LogAppender(LogFormatter::ptr default_formatter);
 
         /**
-         * @brief ææ„å‡½æ•°
+         * @brief Îö¹¹º¯Êı
          */
         virtual ~LogAppender() {}
 
         /**
-         * @brief è®¾ç½®æ—¥å¿—æ ¼å¼å™¨
+         * @brief ÉèÖÃÈÕÖ¾¸ñÊ½Æ÷
          */
         void setFormatter(LogFormatter::ptr val);
 
         /**
-         * @brief è·å–æ—¥å¿—æ ¼å¼å™¨
+         * @brief »ñÈ¡ÈÕÖ¾¸ñÊ½Æ÷
          */
         LogFormatter::ptr getFormatter();
 
         /**
-         * @brief å†™å…¥æ—¥å¿—
+         * @brief Ğ´ÈëÈÕÖ¾
          */
         virtual void log(LogEvent::ptr event) = 0;
 
         /**
-         * @brief å°†æ—¥å¿—è¾“å‡ºç›®æ ‡çš„é…ç½®è½¬æˆYAML String
+         * @brief ½«ÈÕÖ¾Êä³öÄ¿±êµÄÅäÖÃ×ª³ÉYAML String
          */
         virtual std::string toYamlString() = 0;
 
     protected:
         /// Mutex
         MutexType m_mutex;
-        /// æ—¥å¿—æ ¼å¼å™¨
+        /// ÈÕÖ¾¸ñÊ½Æ÷
         LogFormatter::ptr m_formatter;
-        /// é»˜è®¤æ—¥å¿—æ ¼å¼å™¨
+        /// Ä¬ÈÏÈÕÖ¾¸ñÊ½Æ÷
         LogFormatter::ptr m_defaultFormatter;
     };
 
 /**
- * @brief è¾“å‡ºåˆ°æ§åˆ¶å°çš„Appender
+ * @brief Êä³öµ½¿ØÖÆÌ¨µÄAppender
  */
     class StdoutLogAppender : public LogAppender {
     public:
         typedef std::shared_ptr<StdoutLogAppender> ptr;
 
         /**
-         * @brief æ„é€ å‡½æ•°
+         * @brief ¹¹Ôìº¯Êı
          */
         StdoutLogAppender();
 
         /**
-         * @brief å†™å…¥æ—¥å¿—
+         * @brief Ğ´ÈëÈÕÖ¾
          */
         void log(LogEvent::ptr event) override;
 
         /**
-         * @brief å°†æ—¥å¿—è¾“å‡ºç›®æ ‡çš„é…ç½®è½¬æˆYAML String
+         * @brief ½«ÈÕÖ¾Êä³öÄ¿±êµÄÅäÖÃ×ª³ÉYAML String
          */
         std::string toYamlString() override;
     };
 
 /**
- * @brief è¾“å‡ºåˆ°æ–‡ä»¶
+ * @brief Êä³öµ½ÎÄ¼ş
  */
     class FileLogAppender : public LogAppender {
     public:
         typedef std::shared_ptr<FileLogAppender> ptr;
 
         /**
-         * @brief æ„é€ å‡½æ•°
-         * @param[in] file æ—¥å¿—æ–‡ä»¶è·¯å¾„
+         * @brief ¹¹Ôìº¯Êı
+         * @param[in] file ÈÕÖ¾ÎÄ¼şÂ·¾¶
          */
         FileLogAppender(const std::string &file);
 
         /**
-         * @brief å†™æ—¥å¿—
+         * @brief Ğ´ÈÕÖ¾
          */
         void log(LogEvent::ptr event) override;
 
         /**
-         * @brief é‡æ–°æ‰“å¼€æ—¥å¿—æ–‡ä»¶
-         * @return æˆåŠŸè¿”å›true
+         * @brief ÖØĞÂ´ò¿ªÈÕÖ¾ÎÄ¼ş
+         * @return ³É¹¦·µ»Øtrue
          */
         bool reopen();
 
         /**
-         * @brief å°†æ—¥å¿—è¾“å‡ºç›®æ ‡çš„é…ç½®è½¬æˆYAML String
+         * @brief ½«ÈÕÖ¾Êä³öÄ¿±êµÄÅäÖÃ×ª³ÉYAML String
          */
         std::string toYamlString() override;
 
     private:
-        /// æ–‡ä»¶è·¯å¾„
+        /// ÎÄ¼şÂ·¾¶
         std::string m_filename;
-        /// æ–‡ä»¶æµ
+        /// ÎÄ¼şÁ÷
         std::ofstream m_filestream;
-        /// ä¸Šæ¬¡é‡æ‰“æ‰“å¼€æ—¶é—´
+        /// ÉÏ´ÎÖØ´ò´ò¿ªÊ±¼ä
         uint64_t m_lastTime = 0;
-        /// æ–‡ä»¶æ‰“å¼€é”™è¯¯æ ‡è¯†
+        /// ÎÄ¼ş´ò¿ª´íÎó±êÊ¶
         bool m_reopenError = false;
     };
 
 /**
- * @brief æ—¥å¿—å™¨ç±»
- * @note æ—¥å¿—å™¨ç±»ä¸å¸¦root logger
+ * @brief ÈÕÖ¾Æ÷Àà
+ * @note ÈÕÖ¾Æ÷Àà²»´øroot logger
  */
     class Logger {
     public:
@@ -384,142 +447,142 @@ namespace ultra {
         typedef Spinlock MutexType;
 
         /**
-         * @brief æ„é€ å‡½æ•°
-         * @param[in] name æ—¥å¿—å™¨åç§°
+         * @brief ¹¹Ôìº¯Êı
+         * @param[in] name ÈÕÖ¾Æ÷Ãû³Æ
          */
         Logger(const std::string &name = "default");
 
         /**
-         * @brief è·å–æ—¥å¿—å™¨åç§°
+         * @brief »ñÈ¡ÈÕÖ¾Æ÷Ãû³Æ
          */
         const std::string &getName() const { return m_name; }
 
         /**
-         * @brief è·å–åˆ›å»ºæ—¶é—´
+         * @brief »ñÈ¡´´½¨Ê±¼ä
          */
         const uint64_t &getCreateTime() const { return m_createTime; }
 
         /**
-         * @brief è®¾ç½®æ—¥å¿—çº§åˆ«
+         * @brief ÉèÖÃÈÕÖ¾¼¶±ğ
          */
         void setLevel(LogLevel::Level level) { m_level = level; }
 
         /**
-         * @brief è·å–æ—¥å¿—çº§åˆ«
+         * @brief »ñÈ¡ÈÕÖ¾¼¶±ğ
          */
         LogLevel::Level getLevel() const { return m_level; }
 
         /**
-         * @brief æ·»åŠ LogAppender
+         * @brief Ìí¼ÓLogAppender
          */
         void addAppender(LogAppender::ptr appender);
 
         /**
-         * @brief åˆ é™¤LogAppender
+         * @brief É¾³ıLogAppender
          */
         void delAppender(LogAppender::ptr appender);
 
         /**
-         * @brief æ¸…ç©ºLogAppender
+         * @brief Çå¿ÕLogAppender
          */
         void clearAppenders();
 
         /**
-         * @brief å†™æ—¥å¿—
+         * @brief Ğ´ÈÕÖ¾
          */
         void log(LogEvent::ptr event);
 
         /**
-         * @brief å°†æ—¥å¿—å™¨çš„é…ç½®è½¬æˆYAML String
+         * @brief ½«ÈÕÖ¾Æ÷µÄÅäÖÃ×ª³ÉYAML String
          */
         std::string toYamlString();
 
     private:
         /// Mutex
         MutexType m_mutex;
-        /// æ—¥å¿—å™¨åç§°
+        /// ÈÕÖ¾Æ÷Ãû³Æ
         std::string m_name;
-        /// æ—¥å¿—å™¨ç­‰çº§
+        /// ÈÕÖ¾Æ÷µÈ¼¶
         LogLevel::Level m_level;
-        /// LogAppenderé›†åˆ
+        /// LogAppender¼¯ºÏ
         std::list<LogAppender::ptr> m_appenders;
-        /// åˆ›å»ºæ—¶é—´ï¼ˆæ¯«ç§’ï¼‰
+        /// ´´½¨Ê±¼ä£¨ºÁÃë£©
         uint64_t m_createTime;
     };
 
 /**
- * @brief æ—¥å¿—äº‹ä»¶åŒ…è£…å™¨ï¼Œæ–¹ä¾¿å®å®šä¹‰ï¼Œå†…éƒ¨åŒ…å«æ—¥å¿—äº‹ä»¶å’Œæ—¥å¿—å™¨
+ * @brief ÈÕÖ¾ÊÂ¼ş°ü×°Æ÷£¬·½±ãºê¶¨Òå£¬ÄÚ²¿°üº¬ÈÕÖ¾ÊÂ¼şºÍÈÕÖ¾Æ÷
  */
     class LogEventWrap {
     public:
         /**
-         * @brief æ„é€ å‡½æ•°
-         * @param[in] logger æ—¥å¿—å™¨
-         * @param[in] event æ—¥å¿—äº‹ä»¶
+         * @brief ¹¹Ôìº¯Êı
+         * @param[in] logger ÈÕÖ¾Æ÷
+         * @param[in] event ÈÕÖ¾ÊÂ¼ş
          */
         LogEventWrap(Logger::ptr logger, LogEvent::ptr event);
 
         /**
-         * @brief ææ„å‡½æ•°
-         * @details æ—¥å¿—äº‹ä»¶åœ¨ææ„æ—¶ç”±æ—¥å¿—å™¨è¿›è¡Œè¾“å‡º
+         * @brief Îö¹¹º¯Êı
+         * @details ÈÕÖ¾ÊÂ¼şÔÚÎö¹¹Ê±ÓÉÈÕÖ¾Æ÷½øĞĞÊä³ö
          */
         ~LogEventWrap();
 
         /**
-         * @brief è·å–æ—¥å¿—äº‹ä»¶
+         * @brief »ñÈ¡ÈÕÖ¾ÊÂ¼ş
          */
         LogEvent::ptr getLogEvent() const { return m_event; }
 
     private:
-        /// æ—¥å¿—å™¨
+        /// ÈÕÖ¾Æ÷
         Logger::ptr m_logger;
-        /// æ—¥å¿—äº‹ä»¶
+        /// ÈÕÖ¾ÊÂ¼ş
         LogEvent::ptr m_event;
     };
 
 /**
- * @brief æ—¥å¿—å™¨ç®¡ç†ç±»
+ * @brief ÈÕÖ¾Æ÷¹ÜÀíÀà
  */
     class LoggerManager {
     public:
         typedef Spinlock MutexType;
 
         /**
-         * @brief æ„é€ å‡½æ•°
+         * @brief ¹¹Ôìº¯Êı
          */
         LoggerManager();
 
         /**
-         * @brief åˆå§‹åŒ–ï¼Œä¸»è¦æ˜¯ç»“åˆé…ç½®æ¨¡å—å®ç°æ—¥å¿—æ¨¡å—åˆå§‹åŒ–
+         * @brief ³õÊ¼»¯£¬Ö÷ÒªÊÇ½áºÏÅäÖÃÄ£¿éÊµÏÖÈÕÖ¾Ä£¿é³õÊ¼»¯
          */
         void init();
 
         /**
-         * @brief è·å–æŒ‡å®šåç§°çš„æ—¥å¿—å™¨
+         * @brief »ñÈ¡Ö¸¶¨Ãû³ÆµÄÈÕÖ¾Æ÷
          */
         Logger::ptr getLogger(const std::string &name);
 
         /**
-         * @brief è·å–rootæ—¥å¿—å™¨ï¼Œç­‰æ•ˆäºgetLogger("root")
+         * @brief »ñÈ¡rootÈÕÖ¾Æ÷£¬µÈĞ§ÓÚgetLogger("root")
          */
         Logger::ptr getRoot() { return m_root; }
 
         /**
-         * @brief å°†æ‰€æœ‰çš„æ—¥å¿—å™¨é…ç½®è½¬æˆYAML String
+         * @brief ½«ËùÓĞµÄÈÕÖ¾Æ÷ÅäÖÃ×ª³ÉYAML String
          */
         std::string toYamlString();
 
     private:
         /// Mutex
         MutexType m_mutex;
-        /// æ—¥å¿—å™¨é›†åˆ
+        /// ÈÕÖ¾Æ÷¼¯ºÏ
         std::map<std::string, Logger::ptr> m_loggers;
-        /// rootæ—¥å¿—å™¨
+        /// rootÈÕÖ¾Æ÷
         Logger::ptr m_root;
     };
 
-/// æ—¥å¿—å™¨ç®¡ç†ç±»å•ä¾‹
-    typedef sylar::Singleton<LoggerManager> LoggerMgr;
+/// ÈÕÖ¾Æ÷¹ÜÀíÀàµ¥Àı
+    typedef ultra::Singleton<LoggerManager> LoggerMgr;
 
 }
 
