@@ -27,7 +27,7 @@ namespace ultra {
     }
 
 /**
- * @brief 单例模式封装类
+ * @brief 单例模式封装类：懒汉式
  * @details T 类型
  *          X 为了创造多个实例对应的Tag
  *          N 同一个Tag创造多个实例索引
