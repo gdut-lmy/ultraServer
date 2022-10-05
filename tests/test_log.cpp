@@ -2,8 +2,8 @@
 // Created by lmy on 2022/9/28.
 //
 
-#include "ultra/log.h"
-#include "ultra/util.h"
+#include "ultra/ultra.h"
+
 /**
  * @file test_log.cpp
  * @brief 日志类测试

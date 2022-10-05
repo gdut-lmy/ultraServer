@@ -39,6 +39,8 @@ set(LIBS
 
 if(BUILD_TEST)
     ultra_add_executable(test_log "tests/test_log.cpp" ultra "${LIBS}")
+    ultra_add_executable(test_util "tests/test_util.cpp" ultra "${LIBS}")
+
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

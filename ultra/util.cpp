@@ -62,14 +62,14 @@ namespace ultra {
         }
         return str;
     }
-/*
+
     void Backtrace(std::vector<std::string> &bt, int size, int skip) {
         void **array = (void **) malloc((sizeof(void *) * size));
         size_t s = ::backtrace(array, size);
 
         char **strings = backtrace_symbols(array, s);
         if (strings == NULL) {
-            SYLAR_LOG_ERROR(g_logger) << "backtrace_synbols error";
+            ULTRA_LOG_ERROR(g_logger) << "backtrace_synbols error";
             return;
         }
 
@@ -373,7 +373,7 @@ namespace ultra {
         }
         return atof(str);
     }
-
+/*
     std::string StringUtil::Format(const char *fmt, ...) {
         va_list ap;
         va_start(ap, fmt);
