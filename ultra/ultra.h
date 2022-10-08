@@ -10,5 +10,7 @@
 #include "singleton.h"
 #include "noncopyable.h"
 #include "macro.h"
+#include "env.h"
+#include "config.h"
 
 #endif //ULTRASERVER_ULTRA_H

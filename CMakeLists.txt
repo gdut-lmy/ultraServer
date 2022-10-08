@@ -26,6 +26,8 @@ set(LIB_SRC
         ultra/log.cpp
         ultra/util.cpp
         ultra/mutex.cpp
+        ultra/env.cpp
+        ultra/config.cpp
         )
 
 add_library(ultra SHARED ${LIB_SRC})
@@ -40,6 +42,7 @@ set(LIBS
 if(BUILD_TEST)
     ultra_add_executable(test_log "tests/test_log.cpp" ultra "${LIBS}")
     ultra_add_executable(test_util "tests/test_util.cpp" ultra "${LIBS}")
+    ultra_add_executable(test_env "tests/test_env.cpp" ultra "${LIBS}")
 
 endif()
 
