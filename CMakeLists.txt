@@ -43,6 +43,7 @@ if(BUILD_TEST)
     ultra_add_executable(test_log "tests/test_log.cpp" ultra "${LIBS}")
     ultra_add_executable(test_util "tests/test_util.cpp" ultra "${LIBS}")
     ultra_add_executable(test_env "tests/test_env.cpp" ultra "${LIBS}")
+    ultra_add_executable(test_config "tests/test_config.cpp" ultra "${LIBS}")
 
 endif()
 

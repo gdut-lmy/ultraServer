@@ -17,6 +17,8 @@
 #include <yaml-cpp/yaml.h>
 #include "singleton.h"
 #include "mutex.h"
+#include "config.h"
+#include "env.h"
 /**
  * @brief 获取root日志器
  */

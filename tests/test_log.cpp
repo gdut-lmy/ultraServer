@@ -17,7 +17,10 @@
 
 ultra::Logger::ptr g_logger = ULTRA_LOG_ROOT(); // 默认INFO级别
 
-int main() {
+int main(int argc, char *argv[]) {
+
+    ultra::EnvMgr::GetInstance()->init(argc, argv);
+    ultra::Config::LoadFromConfDir(ultra::EnvMgr::GetInstance()->getConfigPath());
 
     ULTRA_LOG_FATAL(g_logger) << "fatal msg";
     ULTRA_LOG_ERROR(g_logger) << "err msg";
@@ -48,13 +51,17 @@ int main() {
 
     ultra::Logger::ptr test_logger = ULTRA_LOG_NAME("test_logger");
     ultra::StdoutLogAppender::ptr appender(new ultra::StdoutLogAppender);
-    ultra::LogFormatter::ptr formatter(new ultra::LogFormatter("%d:%rms%T%p%T%c%T%f:%l %m%n")); // 时间：启动毫秒数 级别 日志名称 文件名：行号 消息 换行
+    ultra::LogFormatter::ptr formatter(
+            new ultra::LogFormatter("%d:%rms%T%p%T%c%T%f:%l %m%n")); // 时间：启动毫秒数 级别 日志名称 文件名：行号 消息 换行
     appender->setFormatter(formatter);
     test_logger->addAppender(appender);
     test_logger->setLevel(ultra::LogLevel::WARN);
 
     ULTRA_LOG_ERROR(test_logger) << "err msg";
     ULTRA_LOG_INFO(test_logger) << "info msg"; // 不打印
+
+    g_logger->setLevel(ultra::LogLevel::INFO);
+    ULTRA_LOG_INFO(g_logger) << "logger config:" << ultra::LoggerMgr::GetInstance()->toYamlString();
 
     return 0;
 }
