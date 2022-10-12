@@ -17,11 +17,10 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
-
 #include "mutex.h"
-#include "log.h"
 #include "util.h"
 #include "env.h"
+#include "log.h"
 
 namespace ultra {
 /**

@@ -15,6 +15,7 @@
 #include "singleton.h"
 #include "mutex.h"
 #include "util.h"
+#include "config.h"
 
 namespace ultra {
 

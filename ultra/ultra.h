@@ -12,5 +12,7 @@
 #include "macro.h"
 #include "env.h"
 #include "config.h"
+#include "mutex.h"
+#include "thread.h"
 
 #endif //ULTRASERVER_ULTRA_H
