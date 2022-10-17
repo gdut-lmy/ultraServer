@@ -14,5 +14,6 @@
 #include "config.h"
 #include "mutex.h"
 #include "thread.h"
+#include "fiber.h"
 
 #endif //ULTRASERVER_ULTRA_H
