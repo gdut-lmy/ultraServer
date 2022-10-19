@@ -30,6 +30,7 @@ set(LIB_SRC
         ultra/config.cpp
         ultra/thread.cpp
         ultra/fiber.cpp
+        ultra/scheduler.cpp
         )
 
 add_library(ultra SHARED ${LIB_SRC})
@@ -48,6 +49,7 @@ if(BUILD_TEST)
     ultra_add_executable(test_config "tests/test_config.cpp" ultra "${LIBS}")
     ultra_add_executable(test_thread "tests/test_thread.cpp" ultra "${LIBS}")
     ultra_add_executable(test_fiber "tests/test_fiber.cpp" ultra "${LIBS}")
+    ultra_add_executable(test_scheduler "tests/test_scheduler.cpp" ultra "${LIBS}")
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

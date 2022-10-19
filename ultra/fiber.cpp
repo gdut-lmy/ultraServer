@@ -9,6 +9,7 @@
 #include "config.h"
 #include "log.h"
 #include "macro.h"
+#include "scheduler.h"
 
 namespace ultra {
 
@@ -150,9 +151,9 @@ namespace ultra {
 
         // 如果协程参与调度器调度，那么应该和调度器的主协程进行swap，而不是线程主协程
         if (m_runInScheduler) {
-/*            if (swapcontext(&(Scheduler::GetMainFiber()->m_ctx), &m_ctx)) {
+            if (swapcontext(&(Scheduler::GetMainFiber()->m_ctx), &m_ctx)) {
                 ULTRA_ASSERT2(false, "swapcontext");
-            }*/
+            }
         } else {
             if (swapcontext(&(t_thread_fiber->m_ctx), &m_ctx)) {
                 ULTRA_ASSERT2(false, "swapcontext");
@@ -170,9 +171,9 @@ namespace ultra {
 
         // 如果协程参与调度器调度，那么应该和调度器的主协程进行swap，而不是线程主协程
         if (m_runInScheduler) {
-/*            if (swapcontext(&m_ctx, &(Scheduler::GetMainFiber()->m_ctx))) {
+            if (swapcontext(&m_ctx, &(Scheduler::GetMainFiber()->m_ctx))) {
                 ULTRA_ASSERT2(false, "swapcontext");
-            }*/
+            }
         } else {
             if (swapcontext(&m_ctx, &(t_thread_fiber->m_ctx))) {
                 ULTRA_ASSERT2(false, "swapcontext");

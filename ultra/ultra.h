@@ -15,5 +15,6 @@
 #include "mutex.h"
 #include "thread.h"
 #include "fiber.h"
+#include "scheduler.h"
 
 #endif //ULTRASERVER_ULTRA_H
