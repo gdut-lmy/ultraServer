@@ -5,6 +5,7 @@
 #include "fiber.h"
 
 #include <atomic>
+#include <utility>
 #include "fiber.h"
 #include "config.h"
 #include "log.h"
@@ -84,7 +85,7 @@ namespace ultra {
  * 带参数的构造函数用于创建其他协程，需要分配栈
  */
     Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool run_in_scheduler)
-            : m_id(s_fiber_id++), m_cb(cb), m_runInScheduler(run_in_scheduler) {
+            : m_id(s_fiber_id++), m_cb(std::move(cb)), m_runInScheduler(run_in_scheduler) {
         ++s_fiber_count;
         m_stacksize = stacksize ? stacksize : g_fiber_stack_size->getValue();
         m_stack = StackAllocator::Alloc(m_stacksize);
