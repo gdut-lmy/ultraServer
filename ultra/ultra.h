@@ -16,5 +16,6 @@
 #include "thread.h"
 #include "fiber.h"
 #include "scheduler.h"
+#include "iomanager.h"
 
 #endif //ULTRASERVER_ULTRA_H
