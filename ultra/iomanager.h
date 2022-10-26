@@ -161,7 +161,7 @@ namespace ultra {
          * @param[out] timeout 最近一个定时器的超时时间，用于idle协程的epoll_wait
          * @return 返回是否可以停止
          */
-        bool stopping(uint64_t& timeout);
+        bool stopping(uint64_t &timeout);
 
         /**
          * @brief 当有定时器插入到头部时，要重新更新epoll_wait的超时时间，这里是唤醒idle协程以便于使用新的超时时间
