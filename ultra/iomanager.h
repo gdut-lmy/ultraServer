@@ -7,11 +7,11 @@
 
 
 #include "scheduler.h"
-//#include "timer.h"
+#include "timer.h"
 
 namespace ultra {
 
-    class IOManager : public Scheduler {
+class IOManager : public Scheduler ,public TimerManager{
     public:
         typedef std::shared_ptr<IOManager> ptr;
         typedef RWMutex RWMutexType;
@@ -166,7 +166,7 @@ namespace ultra {
         /**
          * @brief 当有定时器插入到头部时，要重新更新epoll_wait的超时时间，这里是唤醒idle协程以便于使用新的超时时间
          */
-        //void onTimerInsertedAtFront() override;
+        void onTimerInsertedAtFront() override;
 
         /**
          * @brief 重置socket句柄上下文的容器大小

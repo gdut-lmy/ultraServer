@@ -32,6 +32,7 @@ set(LIB_SRC
         ultra/fiber.cpp
         ultra/scheduler.cpp
         ultra/iomanager.cpp
+        ultra/timer.cpp
         )
 
 add_library(ultra SHARED ${LIB_SRC})
@@ -52,6 +53,7 @@ if(BUILD_TEST)
     ultra_add_executable(test_fiber "tests/test_fiber.cpp" ultra "${LIBS}")
     ultra_add_executable(test_scheduler "tests/test_scheduler.cpp" ultra "${LIBS}")
     ultra_add_executable(test_iomanager "tests/test_iomanager.cpp" ultra "${LIBS}")
+    ultra_add_executable(test_timer "tests/test_timer.cpp" ultra "${LIBS}")
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)

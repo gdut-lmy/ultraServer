@@ -17,5 +17,6 @@
 #include "fiber.h"
 #include "scheduler.h"
 #include "iomanager.h"
+#include "timer.h"
 
 #endif //ULTRASERVER_ULTRA_H

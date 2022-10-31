@@ -334,6 +334,7 @@ namespace ultra {
  */
     void IOManager::tickle() {
         ULTRA_LOG_DEBUG(g_logger) << "tickle";
+        //有没有空闲线程
         if (!hasIdleThreads()) {
             return;
         }
@@ -346,7 +347,15 @@ namespace ultra {
         return m_pendingEventCount == 0 && Scheduler::stopping();
     }
 
-/**
+
+    bool IOManager::stopping(uint64_t &timeout) {
+        // 对于IOManager而言，必须等所有待调度的IO事件都执行完了才可以退出
+        // 增加定时器功能后，还应该保证没有剩余的定时器待触发
+        timeout = getNextTimer();
+        return timeout == ~0ull && m_pendingEventCount == 0 && Scheduler::stopping();
+    }
+
+    /**
  * 调度器无调度任务时会阻塞idle协程上，对IO调度器而言，idle状态应该关注两件事，一是有没有新的调度任务，对应Schduler::schedule()，
  * 如果有新的调度任务，那应该立即退出idle状态，并执行对应的任务；二是关注当前注册的所有IO事件有没有触发，如果有触发，那么应该执行
  * IO事件对应的回调函数
@@ -362,20 +371,39 @@ namespace ultra {
         });
 
         while (true) {
-            if (stopping()) {
+            // 获取下一个定时器的超时时间，顺便判断调度器是否停止
+            uint64_t next_timeout = 0;
+            if (ULTRA_UNLIKELY(stopping(next_timeout))) {
                 ULTRA_LOG_DEBUG(g_logger) << "name=" << getName() << "idle stopping exit";
                 break;
             }
-            // 阻塞在epoll_wait上，等待事件发生
-            static const int MAX_TIMEOUT = 5000;
-            int rt = epoll_wait(m_epfd, events, MAX_EVNETS, MAX_TIMEOUT);
-            if (rt < 0) {
-                if (errno == EINTR) {
-                    continue;
+
+            // 阻塞在epoll_wait上，等待事件发生或定时器超时
+            int rt = 0;
+            do {
+                // 默认超时时间5秒，如果下一个定时器的超时时间大于5秒，仍以5秒来计算超时，避免定时器超时时间太大时，epoll_wait一直阻塞
+                static const int MAX_TIMEOUT = 5000;
+                if (next_timeout != ~0ull) {
+                    next_timeout = std::min((int) next_timeout, MAX_TIMEOUT);
+                } else {
+                    next_timeout = MAX_TIMEOUT;
                 }
-                ULTRA_LOG_ERROR(g_logger) << "epoll_wait(" << m_epfd << ") (rt="
-                                          << rt << ") (errno=" << errno << ") (errstr:" << strerror(errno) << ")";
-                break;
+                rt = epoll_wait(m_epfd, events, MAX_EVNETS, (int) next_timeout);
+                if (rt < 0 && errno == EINTR) {
+                    continue;
+                } else {
+                    break;
+                }
+            } while (true);
+
+            // 收集所有已超时的定时器，执行回调函数
+            std::vector<std::function<void()>> cbs;
+            listExpiredCb(cbs);
+            if (!cbs.empty()) {
+                for (const auto &cb: cbs) {
+                    schedule(cb);
+                }
+                cbs.clear();
             }
 
             // 遍历所有发生的事件，根据epoll_event的私有指针找到对应的FdContext，进行事件处理
@@ -385,7 +413,7 @@ namespace ultra {
                     // ticklefd[0]用于通知协程调度，这时只需要把管道里的内容读完即可
                     uint8_t dummy[256];
                     while (read(m_tickleFds[0], dummy, sizeof(dummy)) > 0);
-                    continue;
+                    continue; //进入下次循环
                 }
 
                 FdContext *fd_ctx = (FdContext *) event.data.ptr;
@@ -445,6 +473,10 @@ namespace ultra {
 
             raw_ptr->yield();
         } // end while(true)
+    }
+
+    void IOManager::onTimerInsertedAtFront() {
+        tickle();
     }
 
 }
