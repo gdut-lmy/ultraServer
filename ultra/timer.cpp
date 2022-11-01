@@ -35,7 +35,7 @@ namespace ultra {
             ,m_ms(ms)
             ,m_cb(cb)
             ,m_manager(manager) {
-        m_next = ultra::GetElapsedMS() + m_ms;
+        m_next = ultra::GetElapsedMS() + m_ms; //变成相对时间
     }
 
     Timer::Timer(uint64_t next)

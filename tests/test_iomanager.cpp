@@ -93,10 +93,10 @@ void test_io() {
 }
 
 void test_iomanager() {
-    //ultra::IOManager iom;
-    ultra::IOManager iom(10); // 演示多线程下IO协程在不同线程之间切换
+    ultra::IOManager iom;
+    //ultra::IOManager iom(10); // 演示多线程下IO协程在不同线程之间切换
     iom.schedule(test_io);
-    iom.schedule(watch_io_read);
+   // iom.schedule(watch_io_read);
 
 }
 

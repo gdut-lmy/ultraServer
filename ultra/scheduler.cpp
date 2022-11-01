@@ -4,7 +4,7 @@
 
 #include "scheduler.h"
 #include "macro.h"
-//#include "hook.h"
+#include "hook.h"
 
 namespace ultra {
 
@@ -135,7 +135,7 @@ namespace ultra {
 
     void Scheduler::run() {
         ULTRA_LOG_DEBUG(g_logger) << "run";
-        //set_hook_enable(true);
+        set_hook_enable(true);
         setThis();
         if (ultra::GetThreadId() != m_rootThread) {
             t_scheduler_fiber = ultra::Fiber::GetThis().get();

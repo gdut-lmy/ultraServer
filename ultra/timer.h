@@ -95,7 +95,7 @@ namespace ultra {
         /**
          * @brief 析构函数
          */
-        virtual ~TimerManager();
+        virtual ~TimerManager(); //基类的析构函数为虚函数，确保基类和父类都能正确析构
 
         /**
          * @brief 添加定时器

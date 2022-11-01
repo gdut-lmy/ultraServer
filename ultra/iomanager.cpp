@@ -373,34 +373,34 @@ namespace ultra {
         while (true) {
             // 获取下一个定时器的超时时间，顺便判断调度器是否停止
             uint64_t next_timeout = 0;
-            if (ULTRA_UNLIKELY(stopping(next_timeout))) {
+            if( ULTRA_UNLIKELY(stopping(next_timeout))) {
                 ULTRA_LOG_DEBUG(g_logger) << "name=" << getName() << "idle stopping exit";
                 break;
             }
 
             // 阻塞在epoll_wait上，等待事件发生或定时器超时
             int rt = 0;
-            do {
+            do{
                 // 默认超时时间5秒，如果下一个定时器的超时时间大于5秒，仍以5秒来计算超时，避免定时器超时时间太大时，epoll_wait一直阻塞
                 static const int MAX_TIMEOUT = 5000;
-                if (next_timeout != ~0ull) {
-                    next_timeout = std::min((int) next_timeout, MAX_TIMEOUT);
+                if(next_timeout != ~0ull) {
+                    next_timeout = std::min((int)next_timeout, MAX_TIMEOUT);
                 } else {
                     next_timeout = MAX_TIMEOUT;
                 }
-                rt = epoll_wait(m_epfd, events, MAX_EVNETS, (int) next_timeout);
-                if (rt < 0 && errno == EINTR) {
+                rt = epoll_wait(m_epfd, events, MAX_EVNETS, (int)next_timeout);
+                if(rt < 0 && errno == EINTR) {
                     continue;
                 } else {
                     break;
                 }
-            } while (true);
+            } while(true);
 
             // 收集所有已超时的定时器，执行回调函数
             std::vector<std::function<void()>> cbs;
             listExpiredCb(cbs);
-            if (!cbs.empty()) {
-                for (const auto &cb: cbs) {
+            if(!cbs.empty()) {
+                for(const auto &cb : cbs) {
                     schedule(cb);
                 }
                 cbs.clear();

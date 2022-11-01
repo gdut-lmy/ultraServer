@@ -18,5 +18,7 @@
 #include "scheduler.h"
 #include "iomanager.h"
 #include "timer.h"
+#include "hook.h"
+#include "fd_manager.h"
 
 #endif //ULTRASERVER_ULTRA_H
