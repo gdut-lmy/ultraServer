@@ -18,6 +18,7 @@
 #include "singleton.h"
 #include "mutex.h"
 #include "env.h"
+#include "util.h"
 /**
  * @brief 获取root日志器
  */

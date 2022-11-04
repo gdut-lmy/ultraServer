@@ -20,5 +20,7 @@
 #include "timer.h"
 #include "hook.h"
 #include "fd_manager.h"
+#include "endian.h"
+#include "address.h"
 
 #endif //ULTRASERVER_ULTRA_H

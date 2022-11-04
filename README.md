@@ -226,3 +226,5 @@ void *dlsym(void *handle, const char *symbol);
 ```
 关于dlsym的使用可参考man 3 dlsym，在链接时需要指定 -ldl 参数。使用dlsym找回被覆盖的符号时，第一个参数固定为 RTLD_NEXT，第二个参数为符号的名称。
 
+
+

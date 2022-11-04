@@ -110,9 +110,12 @@ static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name,
 
     retry:
     ssize_t n = fun(fd, std::forward<Args>(args)...);
+
+    //如果没有执行成功，被系统中断，继续读
     while (n == -1 && errno == EINTR) {
         n = fun(fd, std::forward<Args>(args)...);
     }
+    //如果没有执行成功，是没有数据读，就添加定时事件直到有数据读
     if (n == -1 && errno == EAGAIN) {
         ultra::IOManager *iom = ultra::IOManager::GetThis();
         ultra::Timer::ptr timer;
