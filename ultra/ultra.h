@@ -22,5 +22,6 @@
 #include "fd_manager.h"
 #include "endian.h"
 #include "address.h"
+#include "socket.h"
 
 #endif //ULTRASERVER_ULTRA_H

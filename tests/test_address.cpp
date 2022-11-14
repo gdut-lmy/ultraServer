@@ -33,7 +33,7 @@ void test_ifaces(int family) {
         ULTRA_LOG_ERROR(g_logger) << "GetInterfaceAddresses fail";
         return;
     }
-    for (auto &i : results) {
+    for (auto &i: results) {
         ULTRA_LOG_INFO(g_logger) << i.first << " - " << i.second.first->toString() << " - "
                                  << i.second.second;
     }
@@ -51,11 +51,11 @@ void test_iface(const char *iface, int family) {
 
     std::vector<std::pair<ultra::Address::ptr, uint32_t>> result;
     bool v = ultra::Address::GetInterfaceAddresses(result, iface, family);
-    if(!v) {
+    if (!v) {
         ULTRA_LOG_ERROR(g_logger) << "GetInterfaceAddresses fail";
         return;
     }
-    for(auto &i : result) {
+    for (auto &i: result) {
         ULTRA_LOG_INFO(g_logger) << i.first->toString() << " - " << i.second;
     }
 
@@ -70,22 +70,22 @@ void test_iface(const char *iface, int family) {
 void test_lookup(const char *host) {
     ULTRA_LOG_INFO(g_logger) << "test_lookup: " << host;
 
-    ULTRA_LOG_INFO(g_logger) <<"Lookup:";
+    ULTRA_LOG_INFO(g_logger) << "Lookup:";
     std::vector<ultra::Address::ptr> results;
     bool v = ultra::Address::Lookup(results, host, AF_INET);
-    if(!v) {
+    if (!v) {
         ULTRA_LOG_ERROR(g_logger) << "Lookup fail";
         return;
     }
-    for(auto &i : results) {
+    for (auto &i: results) {
         ULTRA_LOG_INFO(g_logger) << i->toString();
     }
 
-    ULTRA_LOG_INFO(g_logger) <<"LookupAny:";
+    ULTRA_LOG_INFO(g_logger) << "LookupAny:";
     auto addr2 = ultra::Address::LookupAny(host);
     ULTRA_LOG_INFO(g_logger) << addr2->toString();
 
-    ULTRA_LOG_INFO(g_logger) <<"LookupAnyIPAddress:";
+    ULTRA_LOG_INFO(g_logger) << "LookupAnyIPAddress:";
     auto addr1 = ultra::Address::LookupAnyIPAddress(host);
     ULTRA_LOG_INFO(g_logger) << addr1->toString();
 
@@ -152,17 +152,48 @@ void test_unix() {
     ULTRA_LOG_INFO(g_logger) << "\n";
 }
 
+
+struct A {
+    unsigned short sa_f;
+    char sa_data[14];
+};
+
+struct B {
+    unsigned short sin_f;
+    unsigned short sin_p;
+    int ipv4;
+    char sin_zero[8];
+};
+
+void transfer(const A *_addr) {
+    std::cout << &_addr;
+}
+
+
+void test_struct() {
+
+    B addr_in;
+    memset(&addr_in, 0, sizeof(addr_in));
+    addr_in.sin_f = AF_INET;
+    addr_in.sin_p = 80;
+    addr_in.ipv4 = 13334858;
+
+    transfer((A *) &addr_in);
+
+}
+
+
 int main(int argc, char *argv[]) {
     ultra::EnvMgr::GetInstance()->init(argc, argv);
     ultra::Config::LoadFromConfDir(ultra::EnvMgr::GetInstance()->getConfigPath());
 
-    // 获取本机所有网卡的IPv4地址和IPv6地址以及掩码长度
-    test_ifaces(AF_INET);
-    test_ifaces(AF_INET6);
-
-    // 获取本机eth0网卡的IPv4地址和IPv6地址以及掩码长度
-    test_iface("eth0", AF_INET);
-    test_iface("eth0", AF_INET6);
+     //获取本机所有网卡的IPv4地址和IPv6地址以及掩码长度
+//    test_ifaces(AF_INET);
+//    test_ifaces(AF_INET6);
+//
+//    // 获取本机eth0网卡的IPv4地址和IPv6地址以及掩码长度
+//    test_iface("eth0", AF_INET);
+//    test_iface("eth0", AF_INET6);
 
     // ip域名服务解析
     test_lookup("127.0.0.1");
@@ -176,13 +207,15 @@ int main(int argc, char *argv[]) {
     test_lookup("www.baidu.com:http");
 
     // IPv4地址类测试
-    test_ipv4();
+//    test_ipv4();
+//
+//    // IPv6地址类测试
+//    test_ipv6();
+//
+//    // Unix套接字地址类测试
+//    test_unix();
 
-    // IPv6地址类测试
-    test_ipv6();
-
-    // Unix套接字地址类测试
-    test_unix();
+    //test_struct();
 
     return 0;
 }

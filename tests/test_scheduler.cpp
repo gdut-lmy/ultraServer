@@ -76,7 +76,7 @@ int main() {
      * 只使用main函数线程进行协程调度，相当于先攒下一波协程，然后切换到调度器的run方法将这些协程
      * 消耗掉，然后再返回main函数往下执行
      */
-    ultra::Scheduler sc;
+    ultra::IOManager sc;
 
     // 额外创建新的线程进行调度，那只要添加了调度任务，调度器马上就可以调度该任务
     // ultra::Scheduler sc(3, false);
@@ -90,7 +90,7 @@ int main() {
     sc.schedule(fiber);
 
     // 创建调度线程，开始任务调度，如果只使用main函数线程进行调度，那start相当于什么也没做
-    sc.start();
+
 
     /**
      * 只要调度器未停止，就可以添加调度任务
@@ -102,7 +102,6 @@ int main() {
      * 停止调度，如果未使用当前线程进行调度，那么只需要简单地等所有调度线程退出即可
      * 如果使用了当前线程进行调度，那么要先执行当前线程的协程调度函数，等其执行完后再返回caller协程继续往下执行
      */
-    sc.stop();
 
     ULTRA_LOG_INFO(g_logger) << "main end";
     return 0;
