@@ -5,8 +5,8 @@
 #ifndef ULTRASERVER_ENDIAN_H
 #define ULTRASERVER_ENDIAN_H
 
-#define SYLAR_LITTLE_ENDIAN 1
-#define SYLAR_BIG_ENDIAN 2
+#define ULTRA_LITTLE_ENDIAN 1
+#define ULTRA_BIG_ENDIAN 2
 
 #include <byteswap.h>
 #include <stdint.h>
@@ -41,12 +41,12 @@ namespace ultra {
     }
 
 #if BYTE_ORDER == BIG_ENDIAN
-#define SYLAR_BYTE_ORDER SYLAR_BIG_ENDIAN
+#define ULTRA_BYTE_ORDER ULTRA_BIG_ENDIAN
 #else
-#define SYLAR_BYTE_ORDER SYLAR_LITTLE_ENDIAN
+#define ULTRA_BYTE_ORDER ULTRA_LITTLE_ENDIAN
 #endif
 
-#if SYLAR_BYTE_ORDER == SYLAR_BIG_ENDIAN
+#if ULTRA_BYTE_ORDER == ULTRA_BIG_ENDIAN
 
     /**
  * @brief 只在小端机器上执行byteswap, 在大端机器上什么都不做

@@ -124,7 +124,7 @@ namespace ultra {
 
     Socket::ptr Socket::accept() {
         Socket::ptr sock(new Socket(m_family, m_type, m_protocol));
-        int newsock = ::accept(m_sock, nullptr, nullptr);
+        int newsock = ::accept(m_sock, nullptr, nullptr);//accept后面两个参数是为了得到客户端地址信息，不需要读取是就传入null。
         if (newsock == -1) {
             ULTRA_LOG_ERROR(g_logger) << "accept(" << m_sock << ") errno="
                                       << errno << " errstr=" << strerror(errno);
