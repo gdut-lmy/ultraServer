@@ -227,9 +227,13 @@ void *dlsym(void *handle, const char *symbol);
 ```
 关于dlsym的使用可参考man 3 dlsym，在链接时需要指定 -ldl 参数。使用dlsym找回被覆盖的符号时，第一个参数固定为RTLD_NEXT，第二个参数为符号的名称。
 
-### hook模块设计
+#### hook模块设计
 
 hook功能以线程为单位，可自由设置当前线程是否使用hook。协程调度器的调度线程会默认开启hook，而其他线程则不会开启。
 
+### Address模块
 
+### Socket模块
+
+### ByteArray模块
 

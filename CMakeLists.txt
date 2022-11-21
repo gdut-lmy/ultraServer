@@ -38,6 +38,9 @@ set(LIB_SRC
         ultra/address.cpp
         ultra/socket.cpp
         ultra/bytearray.cpp
+        ultra/stream.cpp
+        ultra/streams/socket_stream.cpp
+        ultra/tcp_server.cpp
         )
 
 add_library(ultra SHARED ${LIB_SRC})
@@ -65,6 +68,7 @@ if(BUILD_TEST)
     ultra_add_executable(test_socket_client "tests/test_socket_client.cpp" ultra "${LIBS}")
     ultra_add_executable(test_socket_server "tests/test_socket_server.cpp" ultra "${LIBS}")
     ultra_add_executable(test_bytearray "tests/test_bytearray.cpp" ultra "${LIBS}")
+    ultra_add_executable(test_tcp_server "tests/test_tcp_server.cpp" ultra "${LIBS}")
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
