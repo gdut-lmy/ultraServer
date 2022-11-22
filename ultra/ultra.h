@@ -25,5 +25,6 @@
 #include "socket.h"
 #include "bytearray.h"
 #include "tcp_server.h"
+#include "uri.h"
 
 #endif //ULTRASERVER_ULTRA_H

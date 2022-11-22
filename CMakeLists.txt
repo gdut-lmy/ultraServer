@@ -41,6 +41,7 @@ set(LIB_SRC
         ultra/stream.cpp
         ultra/streams/socket_stream.cpp
         ultra/tcp_server.cpp
+        ultra/uri.cpp
         )
 
 add_library(ultra SHARED ${LIB_SRC})
