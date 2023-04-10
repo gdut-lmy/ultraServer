@@ -1,0 +1,44 @@
+syntax = "proto2";
+
+package ultraRPC;
+
+enum MsgType{
+  HEARTBEAT_PACKET = 0;       // 心跳包
+  RPC_PROVIDER = 1;// 向服务中心声明为provider
+  RPC_CONSUMER = 3 ;// 向服务中心声明为consumer
+
+  RPC_REQUEST = 4; // 通用请求
+  RPC_RESPONSE = 5; // 通用响应
+
+  RPC_METHOD_REQUEST = 6; // 请求方法调用
+  RPC_METHOD_RESPONSE = 7; // 响应方法调用
+
+  RPC_SERVICE_REGISTER = 8;  // 向中心注册服务
+  RPC_SERVICE_REGISTER_RESPONSE = 9;
+
+  RPC_SERVICE_DISCOVER = 10; // 向中心请求服务发现
+  RPC_SERVICE_DISCOVER_RESPONSE = 11;
+
+  RPC_PUBSUB_REQUEST = 12; // 发布订阅
+  RPC_PUBSUB_RESPONSE = 13;
+}
+message ultraProtocol{
+
+  optional int32 MAGIC = 1;
+
+  optional int32 VERSION = 2;
+
+  required uint32 SEQUENCE_ID = 3;
+
+
+
+  required MsgType type = 4;
+
+  message MsgContent{
+    optional string CONTENT = 1;
+  }
+
+  optional MsgContent content = 5;
+
+}
+

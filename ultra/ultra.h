@@ -20,11 +20,13 @@
 #include "timer.h"
 #include "hook.h"
 #include "fd_manager.h"
-#include "endian.h"
+#include "endian_u.h"
 #include "address.h"
 #include "socket.h"
 #include "bytearray.h"
 #include "tcp_server.h"
+#include "stream.h"
 #include "uri.h"
+#include "streams/socket_stream.h"
 
 #endif //ULTRASERVER_ULTRA_H

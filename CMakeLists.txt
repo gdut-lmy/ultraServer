@@ -18,7 +18,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic -fPIC")
 # -Wno-deprecated-declarations: 不要警告使用带deprecated属性的变量，类型，函数
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated -Wno-deprecated-declarations")
 
+
 include_directories(.)
+
+include_directories(/usr/local/protobuf/include)
 
 option(BUILD_TEST "ON for complile test" ON)
 
@@ -42,6 +45,10 @@ set(LIB_SRC
         ultra/streams/socket_stream.cpp
         ultra/tcp_server.cpp
         ultra/uri.cpp
+        ultra/http/http-parser/http_parser.c
+        ultra/rpc/rpc_service_registry.cpp
+        ultra/rpc/rpc_session.cpp
+        ultra/rpc/rpc_protobuf.pb.cc
         )
 
 add_library(ultra SHARED ${LIB_SRC})
@@ -52,6 +59,7 @@ set(LIBS
         pthread
         dl
         yaml-cpp
+        protobuf
         )
 
 if(BUILD_TEST)
@@ -70,7 +78,13 @@ if(BUILD_TEST)
     ultra_add_executable(test_socket_server "tests/test_socket_server.cpp" ultra "${LIBS}")
     ultra_add_executable(test_bytearray "tests/test_bytearray.cpp" ultra "${LIBS}")
     ultra_add_executable(test_tcp_server "tests/test_tcp_server.cpp" ultra "${LIBS}")
+    ultra_add_executable(test_protobuf "tests/test_protobuf.cpp" ultra "${LIBS}")
 endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+
+
+install(TARGETS ultra LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+# 安装头文件
+install(FILES ultra/ultra.h DESTINATION include/ultra)

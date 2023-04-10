@@ -2,14 +2,16 @@
 // Created by lmy on 2022/11/3.
 //
 
-#ifndef ULTRASERVER_ENDIAN_H
-#define ULTRASERVER_ENDIAN_H
+#ifndef __ULTRASERVER_ENDIAN_H__
+#define __ULTRASERVER_ENDIAN_H__
 
 #define ULTRA_LITTLE_ENDIAN 1
 #define ULTRA_BIG_ENDIAN 2
 
 #include <byteswap.h>
-#include <stdint.h>
+
+
+#include <cstdint>
 
 namespace ultra {
 
@@ -83,4 +85,5 @@ T byteswapOnBigEndian(T t) {
 #endif
 
 }
+
 #endif //ULTRASERVER_ENDIAN_H

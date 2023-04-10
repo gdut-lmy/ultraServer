@@ -8,7 +8,7 @@
 #include <string.h>
 #include <iomanip>
 #include <cmath>
-#include "endian.h"
+#include "endian_u.h"
 #include "log.h"
 
 namespace ultra {

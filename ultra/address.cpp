@@ -9,7 +9,7 @@
 #include <ifaddrs.h>
 #include <stddef.h>
 
-#include "endian.h"
+#include "endian_u.h"
 
 namespace ultra {
 
